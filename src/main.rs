@@ -16,7 +16,7 @@ fn main() {
 
     let threads = 8;
     let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(threads+1)
+        .worker_threads(threads+2)
         .enable_all()
         .build()
         .unwrap();
