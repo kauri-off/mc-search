@@ -14,3 +14,4 @@ Cargo.lock
 *.pdb
 
 ports.db
+database.db

@@ -21,7 +21,7 @@ pub fn get_random_ip_address() -> SocketAddr {
 
 pub fn check_tcp_port_open(addr: &SocketAddr) -> bool {
     match TcpStream::connect_timeout(addr, Duration::from_millis(1500)) {
-        Ok(_) => true, // Соединение успешно установлено, порт открыт
+        Ok(_) => true,   // Соединение успешно установлено, порт открыт
         Err(_) => false, // Соединение не удалось, порт закрыт или недоступен
     }
 }
