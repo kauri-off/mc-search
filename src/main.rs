@@ -1,15 +1,13 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
-use mc_scanner::scanner::recieve_port_open;
-use mc_search::{check_tcp_port_open, get_random_ip_address};
 use tokio::{
-    sync::{
-        mpsc::{self, Sender},
-        Mutex,
-    },
+    sync::{mpsc, Mutex},
     task,
 };
-mod mc_scanner;
+
+use crate::{checker::checker::check_random_ip, scanner::handler::port_handler};
+mod checker;
+mod scanner;
 
 fn main() {
     println!("MC Search: Starting");
@@ -25,13 +23,13 @@ fn main() {
         let (tx, rx) = mpsc::channel(5);
         let tx = Arc::new(Mutex::new(tx));
 
-        let _ = task::spawn(recieve_port_open(rx));
+        let _ = task::spawn(port_handler(rx));
 
         loop {
             let mut task_list = vec![];
             for _ in 0..threads {
                 let mutex_tx = Arc::clone(&tx);
-                let task = task::spawn(start_checking(mutex_tx));
+                let task = task::spawn(check_random_ip(mutex_tx));
                 task_list.push(task);
             }
 
@@ -40,16 +38,4 @@ fn main() {
             }
         }
     });
-}
-
-async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
-    let addr = get_random_ip_address();
-    if check_tcp_port_open(&addr).await {
-        let tx = tx.lock().await;
-        if let Err(e) = tx.send(addr).await {
-            eprintln!("Failed to send address over channel: {:?}", e);
-        }
-    } else {
-        // println!("[-] {}", addr);
-    }
 }
