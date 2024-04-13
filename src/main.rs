@@ -20,31 +20,29 @@ async fn main() {
     let (tx, rx) = mpsc::channel(5);
     let tx = Arc::new(Mutex::new(tx));
 
-    let reciever_task = task::spawn(recieve_port_open(rx));
+    let _ = task::spawn(recieve_port_open(rx));
 
-    let mut task_list = vec![];
-    let threads = 8;
-    for i in 0..threads {
-        let mutex_tx = Arc::clone(&tx);
-        let task = task::spawn(start_checking(mutex_tx, i));
-        task_list.push(task);
+    let threads = 4;
+    loop {
+        let mut task_list = vec![];
+        for _ in 0..threads {
+            let mutex_tx = Arc::clone(&tx);
+            let task = task::spawn(start_checking(mutex_tx));
+            task_list.push(task);
+        }
+
+        for task in task_list {
+            task.await.unwrap();
+        }
     }
-
-    for task in task_list {
-        task.await.unwrap();
-    }
-
-    reciever_task.await.unwrap();
 }
 
-async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>, i: i32) {
-    loop {
-        let addr = get_random_ip_address();
-        if check_tcp_port_open(&addr) {
-            let tx = tx.lock().await;
-            tx.send(addr).await.unwrap();
-        } else {
-            println!("|{}| [-] {}", i, addr);
-        }
+async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
+    let addr = get_random_ip_address();
+    if check_tcp_port_open(&addr) {
+        let tx = tx.lock().await;
+        tx.send(addr).await.unwrap();
+    } else {
+        println!("[-] {}", addr);
     }
 }
