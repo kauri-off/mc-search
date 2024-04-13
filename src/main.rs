@@ -1,4 +1,4 @@
-use std::{fs::{remove_file, File}, net::SocketAddr, path::Path, sync::{Arc, Mutex as SyncMutex}, time::Duration};
+use std::{fs::remove_file, net::SocketAddr, path::Path, sync::{Arc, Mutex as SyncMutex}, time::Duration};
 
 use mc_scanner::scanner::recieve_port_open;
 use mc_search::{check_tcp_port_open, get_random_ip_address};
@@ -41,7 +41,7 @@ async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
     loop {
         let addr = get_random_ip_address();
         if !check_tcp_port_open(&addr) {
-            // println!("[-] {}", addr);
+            println!("[-] {}", addr);
             continue;
         }
         let tx = tx.lock().await;
