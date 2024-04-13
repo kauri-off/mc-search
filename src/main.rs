@@ -23,7 +23,7 @@ async fn main() {
     migrate(migrate_tx).await;
 
     let mut task_list = vec![];
-    let threads = 4;
+    let threads = 16;
     for _ in 0..threads {
         let mutex_tx = Arc::clone(&tx);
         let task = task::spawn(start_checking(mutex_tx));
