@@ -24,9 +24,9 @@ async fn main() {
 
     let mut task_list = vec![];
     let threads = 8;
-    for _ in 0..threads {
+    for i in 0..threads {
         let mutex_tx = Arc::clone(&tx);
-        let task = task::spawn(start_checking(mutex_tx));
+        let task = task::spawn(start_checking(mutex_tx, i));
         task_list.push(task);
     }
 
@@ -37,14 +37,14 @@ async fn main() {
     reciever_task.await.unwrap();
 }
 
-async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
+async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>, i: i32) {
     loop {
         let addr = get_random_ip_address();
         if check_tcp_port_open(&addr) {
             let tx = tx.lock().await;
             tx.send(addr).await.unwrap();
         } else {
-            println!("[-] {}", addr);
+            println!("|{}| [-] {}", i, addr);
         }
     }
 }
