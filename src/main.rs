@@ -51,6 +51,6 @@ async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
             eprintln!("Failed to send address over channel: {:?}", e);
         }
     } else {
-        println!("[-] {}", addr);
+        // println!("[-] {}", addr);
     }
 }
