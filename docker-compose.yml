@@ -7,3 +7,7 @@ services:
     volumes:
       - ./db:/app/db
     restart: always
+    deploy:
+      resources:
+        limits:
+          pids: 0

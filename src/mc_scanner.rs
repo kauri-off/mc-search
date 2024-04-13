@@ -33,12 +33,9 @@ pub mod scanner {
         .await
         .unwrap();
         let conn = Arc::new(Mutex::new(conn));
-        loop {
-            let addr = rx.recv().await;
-            if let Some(addr) = addr {
-                let conn_clone = Arc::clone(&conn);
-                task::spawn(do_staff(addr, conn_clone));
-            }
+        while let Some(addr) = rx.recv().await {
+            let conn_clone = Arc::clone(&conn);
+            task::spawn(do_staff(addr, conn_clone));
         }
     }
 

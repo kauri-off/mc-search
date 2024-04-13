@@ -1,7 +1,4 @@
-use std::{
-    net::SocketAddr,
-    sync::Arc
-};
+use std::{net::SocketAddr, sync::Arc};
 
 use mc_scanner::scanner::recieve_port_open;
 use mc_search::{check_tcp_port_open, get_random_ip_address};
@@ -22,7 +19,7 @@ async fn main() {
 
     let _ = task::spawn(recieve_port_open(rx));
 
-    let threads = 4;
+    let threads = 8;
     loop {
         let mut task_list = vec![];
         for _ in 0..threads {
@@ -32,7 +29,7 @@ async fn main() {
         }
 
         for task in task_list {
-            task.await.unwrap();
+            task.await.expect("Failed to await task");
         }
     }
 }
@@ -41,7 +38,9 @@ async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
     let addr = get_random_ip_address();
     if check_tcp_port_open(&addr) {
         let tx = tx.lock().await;
-        tx.send(addr).await.unwrap();
+        if let Err(e) = tx.send(addr).await {
+            eprintln!("Failed to send address over channel: {:?}", e);
+        }
     } else {
         println!("[-] {}", addr);
     }
