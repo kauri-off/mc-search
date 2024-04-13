@@ -44,7 +44,7 @@ fn main() {
 
 async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
     let addr = get_random_ip_address();
-    if check_tcp_port_open(&addr) {
+    if check_tcp_port_open(&addr).await {
         let tx = tx.lock().await;
         if let Err(e) = tx.send(addr).await {
             eprintln!("Failed to send address over channel: {:?}", e);

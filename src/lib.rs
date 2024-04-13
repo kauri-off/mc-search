@@ -1,9 +1,10 @@
 use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream},
+    net::{IpAddr, Ipv4Addr, SocketAddr},
     time::Duration,
 };
 
 use rand::Rng;
+use tokio::{net::TcpStream, time::timeout};
 
 pub fn get_random_ip_address() -> SocketAddr {
     let mut rng = rand::thread_rng();
@@ -19,9 +20,16 @@ pub fn get_random_ip_address() -> SocketAddr {
     ip_address
 }
 
-pub fn check_tcp_port_open(addr: &SocketAddr) -> bool {
-    match TcpStream::connect_timeout(addr, Duration::from_millis(1500)) {
-        Ok(_) => true,   // Соединение успешно установлено, порт открыт
-        Err(_) => false, // Соединение не удалось, порт закрыт или недоступен
+pub async fn check_tcp_port_open(addr: &SocketAddr) -> bool {
+    let open = timeout(Duration::from_millis(1500), async {
+        match TcpStream::connect(addr).await {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    })
+    .await;
+    if let Ok(open) = open {
+        return open;
     }
+    false
 }
