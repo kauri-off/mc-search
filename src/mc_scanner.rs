@@ -2,7 +2,11 @@ pub mod scanner {
     use mc_query::status;
     use rusqlite::params;
     use std::{net::SocketAddr, sync::Arc, time::Duration};
-    use tokio::{sync::{mpsc::Receiver, Mutex}, task, time::timeout};
+    use tokio::{
+        sync::{mpsc::Receiver, Mutex},
+        task,
+        time::timeout,
+    };
     use tokio_rusqlite::Connection;
 
     pub async fn recieve_port_open(mut rx: Receiver<SocketAddr>) {
@@ -42,23 +46,18 @@ pub mod scanner {
         let data = timeout(
             Duration::from_secs(3),
             status(&addr.ip().to_string(), addr.port()),
-        ).await;
+        )
+        .await;
         let mut server_data = Option::None;
         if let Ok(data) = data {
             if let Ok(data) = data {
-                println!(
-                    "[+] [{}] {}/{} | {:?}",
-                    data.version.name, data.players.online, data.players.max, data.motd
-                );
                 server_data = Some(ServerData {
                     version: data.version.name,
                     online: data.players.online,
                     max_online: data.players.max,
-                    motd: format!("{:?}", data.motd)
+                    motd: format!("{:?}", data.motd),
                 })
-        }} else {
-            println!("[/] {}", addr);
-            server_data = None;
+            }
         }
         let addr1 = addr.clone();
         let conn = conn.lock().await;
@@ -69,12 +68,17 @@ pub mod scanner {
                     params![addr1.ip().to_string(), addr1.port(), server_data.version, server_data.online, server_data.max_online, server_data.motd],
                 )
                 .unwrap();
+                println!(
+                    "[+] [{}] {}/{} | {:?}",
+                    server_data.version, server_data.online, server_data.max_online, server_data.motd
+                );
             } else {
                 conn.execute(
                     "INSERT INTO 'ip'(ip, port) VALUES (?1, ?2)",
                     params![addr1.ip().to_string(), addr1.port()],
                 )
                 .unwrap();
+            println!("[/] {}", addr.ip());
             }
             Ok(())
         })
@@ -86,6 +90,6 @@ pub mod scanner {
         version: String,
         online: u32,
         max_online: u32,
-        motd: String
+        motd: String,
     }
 }
