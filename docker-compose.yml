@@ -1,0 +1,9 @@
+version: '3.5'
+
+services:
+  rust:
+    build: .
+    container_name: mc-search
+    volumes:
+      - ./db:/app/db
+    restart: always

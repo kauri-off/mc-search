@@ -44,7 +44,7 @@ async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>, i: i32) {
             let tx = tx.lock().await;
             tx.send(addr).await.unwrap();
         } else {
-            println!("|{}| [-] {}", i, addr);
+            // println!("|{}| [-] {}", i, addr);
         }
     }
 }

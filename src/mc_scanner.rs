@@ -10,7 +10,7 @@ pub mod scanner {
     use tokio_rusqlite::Connection;
 
     pub async fn recieve_port_open(mut rx: Receiver<SocketAddr>) {
-        let conn = tokio_rusqlite::Connection::open("database.db")
+        let conn = tokio_rusqlite::Connection::open("/app/db/database.db")
             .await
             .unwrap();
         conn.call(|conn| {
