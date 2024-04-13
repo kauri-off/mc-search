@@ -40,11 +40,11 @@ async fn main() {
 async fn start_checking(tx: Arc<Mutex<Sender<SocketAddr>>>) {
     loop {
         let addr = get_random_ip_address();
-        if !check_tcp_port_open(&addr) {
+        if check_tcp_port_open(&addr) {
+            let tx = tx.lock().await;
+            tx.send(addr).await.unwrap();
+        } else {
             println!("[-] {}", addr);
-            continue;
         }
-        let tx = tx.lock().await;
-        tx.send(addr).await.unwrap();
     }
 }
