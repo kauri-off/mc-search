@@ -11,3 +11,4 @@ rand = "0.8.5"
 tokio = "1.37.0"
 tokio-rusqlite = "=0.4.0"
 rusqlite = { version = "0.29.0", features = ["bundled"] }
+uuid = "1.8.0"

@@ -7,6 +7,7 @@ use tokio::{
 
 use crate::{checker::checker::check_random_ip, scanner::handler::port_handler};
 mod checker;
+mod packet;
 mod scanner;
 
 fn main() {
@@ -23,7 +24,13 @@ fn main() {
         let (tx, rx) = mpsc::channel(5);
         let tx = Arc::new(Mutex::new(tx));
 
-        let _ = task::spawn(port_handler(rx));
+        let _handler = task::spawn(port_handler(rx));
+        tx.lock()
+            .await
+            .send("127.0.0.1:25565".parse().unwrap())
+            .await
+            .unwrap();
+        _handler.await.unwrap();
 
         loop {
             let mut task_list = vec![];

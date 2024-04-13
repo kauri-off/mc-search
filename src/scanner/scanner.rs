@@ -1,9 +1,16 @@
-use std::{net::SocketAddr, sync::Arc, time::Duration};
-
 use mc_query::status;
 use rusqlite::params;
-use tokio::{sync::Mutex, time::timeout};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+    sync::Mutex,
+    time::timeout,
+};
 use tokio_rusqlite::Connection;
+use uuid::Uuid;
+
+use crate::packet::packet::{MinecraftPacketBuilder, MinecraftUUID, VarInt};
 
 pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
     let data = timeout(
@@ -20,6 +27,10 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
                 online: data.players.online,
                 max_online: data.players.max,
                 motd: motd_fmt(data.motd),
+                license: match license(&addr, data.version.protocol).await {
+                    Ok(t) => t,
+                    Err(_) => false,
+                }
             });
         }
     }
@@ -34,8 +45,8 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
                 )
                 .unwrap();
                 println!(
-                    "[+] [{}] {}/{} | {}",
-                    server_data.version, server_data.online, server_data.max_online, server_data.motd
+                    "[+] |{}|:|{}| [{}] {}/{} | {}",
+                    server_data.license, addr.ip(), server_data.version, server_data.online, server_data.max_online, server_data.motd
                 );
             } else {
                 conn.execute(
@@ -56,6 +67,7 @@ struct ServerData {
     online: u32,
     max_online: u32,
     motd: String,
+    license: bool
 }
 
 pub fn motd_fmt(motd: mc_query::status::ChatObject) -> String {
@@ -71,4 +83,33 @@ pub fn motd_fmt(motd: mc_query::status::ChatObject) -> String {
         Some(t) => t,
         None => String::from("error"),
     }
+}
+
+async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
+    let mut sock = TcpStream::connect(addr).await?;
+    let handshake = MinecraftPacketBuilder::new(0)
+        .add_varint(VarInt(protocol as i32))
+        .add_string(&addr.ip().to_string())
+        .add_bytes(&protocol.to_be_bytes())
+        .add_varint(VarInt(2))
+        .build();
+
+    // dbg!(handshake.to_bytes());
+    sock.write(&handshake.to_bytes()).await.unwrap();
+
+    let login = MinecraftPacketBuilder::new(0)
+        .add_string("9ug943feo")
+        .add_uuid(MinecraftUUID(
+            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
+        ))
+        .build();
+
+    // dbg!(login.to_bytes());
+    sock.write(&login.to_bytes()).await.unwrap();
+    // sock.write(&[0x00]).await.unwrap();
+
+    let mut buf = Vec::new();
+    sock.read_buf(&mut buf).await.unwrap();
+
+    Ok(buf[1] == 1)
 }
