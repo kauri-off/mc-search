@@ -52,7 +52,7 @@ pub mod scanner {
                     version: data.version.name,
                     online: data.players.online,
                     max_online: data.players.max,
-                    motd: format!("{:?}", data.motd),
+                    motd: formatter(data.motd),
                 })
             }
         }
@@ -66,7 +66,7 @@ pub mod scanner {
                 )
                 .unwrap();
                 println!(
-                    "[+] [{}] {}/{} | {:?}",
+                    "[+] [{}] {}/{} | {}",
                     server_data.version, server_data.online, server_data.max_online, server_data.motd
                 );
             } else {
@@ -88,5 +88,20 @@ pub mod scanner {
         online: u32,
         max_online: u32,
         motd: String,
+    }
+
+    pub fn formatter(motd: mc_query::status::ChatObject) -> String {
+        let motd = match motd {
+            status::ChatObject::Object(t) => t.text,
+            status::ChatObject::Array(_) => None,
+            status::ChatObject::JsonPrimitive(t) => match t.as_str() {
+                Some(t) => Some(String::from(t)),
+                None => todo!(),
+            },
+        };
+        match motd {
+            Some(t) => t,
+            None => String::from("error"),
+        }
     }
 }
