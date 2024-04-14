@@ -28,7 +28,7 @@ pub async fn port_handler(mut rx: Receiver<SocketAddr>) {
         )
         .unwrap();
         conn.execute("ALTER TABLE ip
-ADD COLUMN IF NOT EXISTS license BOOLEAN", []).unwrap();
+ADD COLUMN license BOOLEAN", []).unwrap();
         Ok(())
     })
     .await
