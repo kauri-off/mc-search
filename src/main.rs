@@ -13,7 +13,7 @@ mod scanner;
 fn main() {
     println!("MC Search: Starting");
 
-    let threads = 14;
+    let threads = 32;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .worker_threads(threads + 2)
         .enable_all()
