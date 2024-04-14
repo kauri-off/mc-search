@@ -40,8 +40,8 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
     conn.call(move |conn| {
             if let Some(server_data) = server_data {
                 conn.execute(
-                    "INSERT INTO 'ip'(ip, port, version, online, max_online, motd) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                    params![addr_c.ip().to_string(), addr_c.port(), server_data.version, server_data.online, server_data.max_online, server_data.motd],
+                    "INSERT INTO 'ip'(ip, port, version, online, max_online, motd, license) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                    params![addr_c.ip().to_string(), addr_c.port(), server_data.version, server_data.online, server_data.max_online, server_data.motd, server_data.license],
                 )
                 .unwrap();
                 println!(

@@ -21,11 +21,14 @@ pub async fn port_handler(mut rx: Receiver<SocketAddr>) {
     'online'     INTEGER,
     'max_online' INTEGER,
     'motd'       TEXT,
+    'license'    BOOLEAN,
 	PRIMARY KEY('id' AUTOINCREMENT)
 );",
             [],
         )
         .unwrap();
+        conn.execute("ALTER TABLE ip
+ADD COLUMN IF NOT EXISTS license BOOLEAN", []).unwrap();
         Ok(())
     })
     .await
