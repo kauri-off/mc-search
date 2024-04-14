@@ -95,7 +95,7 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
         .build();
 
     // dbg!(handshake.to_bytes());
-    sock.write(&handshake.to_bytes()).await.unwrap();
+    sock.write(&handshake.to_bytes()).await?;
 
     let login = MinecraftPacketBuilder::new(0)
         .add_string("mcscannerbot")
@@ -104,10 +104,10 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
         ))
         .build();
 
-    sock.write(&login.to_bytes()).await.unwrap();
+    sock.write(&login.to_bytes()).await?;
 
     let mut buf = Vec::new();
-    sock.read_buf(&mut buf).await.unwrap();
+    sock.read_buf(&mut buf).await?;
 
-    Ok(buf[1] != 3)
+    Ok(buf.get(1).unwrap_or(&0) != &0x03)
 }
