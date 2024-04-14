@@ -3,7 +3,7 @@ version: '3.5'
 services:
   rust:
     build: .
-    container_name: mc-search
+    container_name: mc-search-1
     volumes:
       - ./db1:/app/db
     restart: always
@@ -13,7 +13,7 @@ services:
           pids: 0
   rust:
     build: .
-    container_name: mc-search
+    container_name: mc-search-2
     volumes:
       - ./db2:/app/db
     restart: always
@@ -23,7 +23,7 @@ services:
           pids: 0
   rust:
     build: .
-    container_name: mc-search
+    container_name: mc-search-3
     volumes:
       - ./db3:/app/db
     restart: always
@@ -33,7 +33,7 @@ services:
           pids: 0
   rust:
     build: .
-    container_name: mc-search
+    container_name: mc-search-4
     volumes:
       - ./db4:/app/db
     restart: always
@@ -43,7 +43,7 @@ services:
           pids: 0
   rust:
     build: .
-    container_name: mc-search
+    container_name: mc-search-5
     volumes:
       - ./db5:/app/db
     restart: always
