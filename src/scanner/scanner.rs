@@ -98,18 +98,16 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
     sock.write(&handshake.to_bytes()).await.unwrap();
 
     let login = MinecraftPacketBuilder::new(0)
-        .add_string("9ug943feo")
+        .add_string("mcscannerbot")
         .add_uuid(MinecraftUUID(
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap(),
         ))
         .build();
 
-    // dbg!(login.to_bytes());
     sock.write(&login.to_bytes()).await.unwrap();
-    // sock.write(&[0x00]).await.unwrap();
 
     let mut buf = Vec::new();
     sock.read_buf(&mut buf).await.unwrap();
 
-    Ok(buf[1] == 1)
+    Ok(buf[1] != 3)
 }

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{net::{SocketAddr, ToSocketAddrs}, sync::Arc};
 
 use tokio::{
     sync::{mpsc, Mutex},
@@ -27,7 +27,7 @@ fn main() {
         let _handler = task::spawn(port_handler(rx));
         // tx.lock()
         //     .await
-        //     .send("127.0.0.1:25565".parse().unwrap())
+        //     .send("mc.hypixel.net:25565".to_socket_addrs().unwrap().next().unwrap())
         //     .await
         //     .unwrap();
         // _handler.await.unwrap();
