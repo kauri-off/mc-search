@@ -1,7 +1,7 @@
 version: '3.5'
 
 services:
-  rust:
+  rust1:
     build: .
     container_name: mc-search-1
     volumes:
@@ -11,7 +11,7 @@ services:
       resources:
         limits:
           pids: 0
-  rust:
+  rust2:
     build: .
     container_name: mc-search-2
     volumes:
@@ -21,7 +21,7 @@ services:
       resources:
         limits:
           pids: 0
-  rust:
+  rust3:
     build: .
     container_name: mc-search-3
     volumes:
@@ -31,7 +31,7 @@ services:
       resources:
         limits:
           pids: 0
-  rust:
+  rust4:
     build: .
     container_name: mc-search-4
     volumes:
@@ -41,7 +41,7 @@ services:
       resources:
         limits:
           pids: 0
-  rust:
+  rust5:
     build: .
     container_name: mc-search-5
     volumes:
