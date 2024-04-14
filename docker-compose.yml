@@ -5,7 +5,47 @@ services:
     build: .
     container_name: mc-search
     volumes:
-      - ./db:/app/db
+      - ./db1:/app/db
+    restart: always
+    deploy:
+      resources:
+        limits:
+          pids: 0
+  rust:
+    build: .
+    container_name: mc-search
+    volumes:
+      - ./db2:/app/db
+    restart: always
+    deploy:
+      resources:
+        limits:
+          pids: 0
+  rust:
+    build: .
+    container_name: mc-search
+    volumes:
+      - ./db3:/app/db
+    restart: always
+    deploy:
+      resources:
+        limits:
+          pids: 0
+  rust:
+    build: .
+    container_name: mc-search
+    volumes:
+      - ./db4:/app/db
+    restart: always
+    deploy:
+      resources:
+        limits:
+          pids: 0
+  rust:
+    build: .
+    container_name: mc-search
+    volumes:
+      - ./db5:/app/db
     restart: always
     deploy:
       resources:

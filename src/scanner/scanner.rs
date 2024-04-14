@@ -54,7 +54,7 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
                     params![addr_c.ip().to_string(), addr_c.port()],
                 )
                 .unwrap();
-            println!("[/] {}", addr.ip());
+            // println!("[/] {}", addr.ip());
             }
             Ok(())
         })
