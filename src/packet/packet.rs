@@ -95,31 +95,29 @@ pub struct VarInt(pub i32);
 
 impl VarInt {
     pub async fn from_socket(stream: &mut TcpStream) -> Result<Self> {
-        let mut result = 0;
-        let mut bytes_read = 0;
-        let mut buf = [0; 1];
+        let mut value = 0;
+        let mut position = 0;
+        let mut current_byte: u8;
 
         loop {
-            stream.read_exact(&mut buf).await?;
-            let byte = buf[0];
-            result |= ((byte & 0x7F) as i32) << (7 * bytes_read);
+            current_byte = stream.read_u8().await?;
+            value |= ((current_byte & 0x7F) as i32) << position;
 
-            if (byte & 0x80) == 0 {
+            if (current_byte & 0x80) == 0 {
                 break;
             }
 
-            bytes_read += 1;
+            position += 7;
 
-            // Проверка на переполнение
-            if bytes_read > 4 {
+            if position >= 32 {
                 return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "VarInt is too large",
-                ));
+                     std::io::ErrorKind::InvalidData,
+                                   "VarInt is too large",
+                     ));
             }
         }
 
-        Ok(VarInt(result))
+        Ok(VarInt(value))
     }
     // Метод для кодирования VarInt в байты
     pub fn to_bytes(&self) -> Vec<u8> {

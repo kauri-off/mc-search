@@ -114,7 +114,6 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<Option<LIC
         return Err(std::io::Error::new(std::io::ErrorKind::Other, "connect error"));
     }
     let packet_id = sock.read_u8().await?;
-    // dbg!(&packet_id);
 
     Ok(LICENSE::from_u8(&packet_id))
 }
