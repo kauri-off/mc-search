@@ -28,7 +28,10 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
                 max_online: data.players.max,
                 motd: motd_fmt(data.motd),
                 license: match license(&addr, data.version.protocol).await {
-                    Ok(t) => Some(t),
+                    Ok(t) => match t {
+                        Some(t) => Some(t.to_u8()),
+                        None => None,
+                    },
                     Err(_) => None,
                 },
             });
@@ -46,7 +49,7 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
                 .unwrap();
                 println!(
                     "[+] |{}|:|{}| [{}] {}/{} | {}",
-                    server_data.license.unwrap_or(true), addr.ip(), server_data.version, server_data.online, server_data.max_online, server_data.motd
+                    server_data.license.unwrap_or(LICENSE::DISCONNECT.to_u8()), addr.ip(), server_data.version, server_data.online, server_data.max_online, server_data.motd
                 );
             } else {
                 conn.execute(
@@ -67,7 +70,7 @@ struct ServerData {
     online: u32,
     max_online: u32,
     motd: String,
-    license: Option<bool>,
+    license: Option<u8>,
 }
 
 pub fn motd_fmt(motd: mc_query::status::ChatObject) -> String {
@@ -85,7 +88,7 @@ pub fn motd_fmt(motd: mc_query::status::ChatObject) -> String {
     }
 }
 
-async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
+async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<Option<LICENSE>> {
     let mut sock = TcpStream::connect(addr).await?;
     let handshake = MinecraftPacketBuilder::new(0)
         .add_varint(VarInt(protocol as i32))
@@ -111,11 +114,30 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
         return Err(std::io::Error::new(std::io::ErrorKind::Other, "connect error"));
     }
     let packet_id = sock.read_u8().await?;
-    dbg!(&packet_id);
+    // dbg!(&packet_id);
 
-    match packet_id {
-        0x01 => Ok(true),
-        0x02 => Ok(false),
-        _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "connect error")),
+    Ok(LICENSE::from_u8(&packet_id))
+}
+
+#[derive(Clone, Copy)]
+enum LICENSE {
+    DISCONNECT = 0x00,
+    LICENSE = 0x01,
+    CRACKED = 0x02
+}
+
+
+impl LICENSE {
+    fn from_u8(value: &u8) -> Option<LICENSE> {
+        match value {
+            0x00 => Some(LICENSE::DISCONNECT),
+            0x01 => Some(LICENSE::LICENSE),
+            0x02 => Some(LICENSE::CRACKED),
+            _ => None,
+        }
+    }
+
+    fn to_u8(&self) -> u8 {
+        *self as u8
     }
 }

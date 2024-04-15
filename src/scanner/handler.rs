@@ -21,7 +21,7 @@ pub async fn port_handler(mut rx: Receiver<SocketAddr>) {
     'online'     INTEGER NOT NULL,
     'max_online' INTEGER NOT NULL,
     'motd'       TEXT NOT NULL,
-    'license'    BOOLEAN,
+    'license'    INTEGER,
 	PRIMARY KEY('id' AUTOINCREMENT)
 );",
             [],
