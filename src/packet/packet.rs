@@ -1,4 +1,6 @@
+use tokio::{io::AsyncReadExt, net::TcpStream};
 use uuid::Uuid;
+use std::io::Result;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinecraftUUID(pub Uuid);
@@ -92,6 +94,33 @@ const SEGMENT_BITS: u32 = 0b0111_1111;
 pub struct VarInt(pub i32);
 
 impl VarInt {
+    pub async fn from_socket(stream: &mut TcpStream) -> Result<Self> {
+        let mut result = 0;
+        let mut bytes_read = 0;
+        let mut buf = [0; 1];
+
+        loop {
+            stream.read_exact(&mut buf).await?;
+            let byte = buf[0];
+            result |= ((byte & 0x7F) as i32) << (7 * bytes_read);
+
+            if (byte & 0x80) == 0 {
+                break;
+            }
+
+            bytes_read += 1;
+
+            // Проверка на переполнение
+            if bytes_read > 4 {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "VarInt is too large",
+                ));
+            }
+        }
+
+        Ok(VarInt(result))
+    }
     // Метод для кодирования VarInt в байты
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut value = self.0 as u32;

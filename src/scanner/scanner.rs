@@ -28,9 +28,9 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
                 max_online: data.players.max,
                 motd: motd_fmt(data.motd),
                 license: match license(&addr, data.version.protocol).await {
-                    Ok(t) => t,
-                    Err(_) => false,
-                }
+                    Ok(t) => Some(t),
+                    Err(_) => None,
+                },
             });
         }
     }
@@ -40,17 +40,17 @@ pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
     conn.call(move |conn| {
             if let Some(server_data) = server_data {
                 conn.execute(
-                    "INSERT INTO 'ip'(ip, port, version, online, max_online, motd, license) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                    "INSERT INTO 'mc_server'(ip, port, version, online, max_online, motd, license) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                     params![addr_c.ip().to_string(), addr_c.port(), server_data.version, server_data.online, server_data.max_online, server_data.motd, server_data.license],
                 )
                 .unwrap();
                 println!(
                     "[+] |{}|:|{}| [{}] {}/{} | {}",
-                    server_data.license, addr.ip(), server_data.version, server_data.online, server_data.max_online, server_data.motd
+                    server_data.license.unwrap_or(true), addr.ip(), server_data.version, server_data.online, server_data.max_online, server_data.motd
                 );
             } else {
                 conn.execute(
-                    "INSERT INTO 'ip'(ip, port) VALUES (?1, ?2)",
+                    "INSERT INTO 'open_port'(ip, port) VALUES (?1, ?2)",
                     params![addr_c.ip().to_string(), addr_c.port()],
                 )
                 .unwrap();
@@ -67,7 +67,7 @@ struct ServerData {
     online: u32,
     max_online: u32,
     motd: String,
-    license: bool
+    license: Option<bool>,
 }
 
 pub fn motd_fmt(motd: mc_query::status::ChatObject) -> String {
@@ -106,8 +106,16 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<bool> {
 
     sock.write(&login.to_bytes()).await?;
 
-    let mut buf = Vec::new();
-    sock.read_buf(&mut buf).await?;
+    let len = VarInt::from_socket(&mut sock).await;
+    if let Err(_) = len {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, "connect error"));
+    }
+    let packet_id = sock.read_u8().await?;
+    dbg!(&packet_id);
 
-    Ok(buf.get(1).unwrap_or(&0) != &0x03)
+    match packet_id {
+        0x01 => Ok(true),
+        0x02 => Ok(false),
+        _ => Err(std::io::Error::new(std::io::ErrorKind::Other, "connect error")),
+    }
 }

@@ -13,16 +13,26 @@ pub async fn port_handler(mut rx: Receiver<SocketAddr>) {
         .unwrap();
     conn.call(|conn| {
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS 'ip' (
+            "CREATE TABLE IF NOT EXISTS 'mc_server' (
 	'id'	     INTEGER NOT NULL,
 	'ip'	     TEXT NOT NULL,
 	'port'	     INTEGER NOT NULL,
-	'version'    TEXT,
-    'online'     INTEGER,
-    'max_online' INTEGER,
-    'motd'       TEXT,
+	'version'    TEXT NOT NULL,
+    'online'     INTEGER NOT NULL,
+    'max_online' INTEGER NOT NULL,
+    'motd'       TEXT NOT NULL,
     'license'    BOOLEAN,
 	PRIMARY KEY('id' AUTOINCREMENT)
+);",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS 'open_port' (
+'id'	     INTEGER NOT NULL,
+'ip'	     TEXT NOT NULL,
+'port'	     INTEGER NOT NULL,
+PRIMARY KEY('id' AUTOINCREMENT)
 );",
             [],
         )
