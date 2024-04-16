@@ -32,5 +32,4 @@ pub async fn update(tx: Arc<Mutex<Sender<SocketAddr>>>) {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
     }
-    println!("Up now");
 }
