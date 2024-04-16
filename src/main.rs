@@ -28,12 +28,12 @@ fn main() {
         let tx = Arc::new(Mutex::new(tx));
 
         let _handler = task::spawn(port_handler(rx));
-        tx.lock()
-            .await
-            .send("45.93.200.95:25565".parse().unwrap())
-            .await
-            .unwrap();
-        _handler.await.unwrap();
+        // tx.lock()
+        //     .await
+        //     .send("45.93.200.95:25565".parse().unwrap())
+        //     .await
+        //     .unwrap();
+        // _handler.await.unwrap();
 
         loop {
             let mut task_list = vec![];
