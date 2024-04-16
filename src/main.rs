@@ -6,7 +6,7 @@ use tokio::{
 };
 
 use crate::{
-    checker::checker::check_random_ip,
+    checker::{checker::check_random_ip, updater::update},
     scanner::handler::port_handler,
 };
 mod checker;
@@ -28,6 +28,8 @@ fn main() {
         let tx = Arc::new(Mutex::new(tx));
 
         let _handler = task::spawn(port_handler(rx));
+        let update_tx = Arc::clone(&tx);
+        update(update_tx).await;
         // tx.lock()
         //     .await
         //     .send("45.93.200.95:25565".parse().unwrap())

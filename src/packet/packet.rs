@@ -28,7 +28,7 @@ impl MinecraftPacket {
         // Добавляем длину пакета как VarInt
         let packet_length = VarInt::from(self.data.len() as i32 + 1); // +1 для packet_id
         let mut cur = Cursor::new(Vec::with_capacity(5));
-        cur.write_var_int(packet_length);
+        let _ = cur.write_var_int(packet_length);
         bytes.extend(cur.into_inner());
 
         // Добавляем packet_id
@@ -59,7 +59,7 @@ impl MinecraftPacketBuilder {
     // Добавление данных типа VarInt в пакет
     pub fn add_varint(&mut self, value: VarInt) -> &mut Self {
         let mut cur = Cursor::new(Vec::with_capacity(5));
-        cur.write_var_int(value);
+        let _ = cur.write_var_int(value);
 
         self.add_bytes(&cur.into_inner());
         self
