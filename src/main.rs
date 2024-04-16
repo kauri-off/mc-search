@@ -27,9 +27,14 @@ fn main() {
         let (tx, rx) = mpsc::channel(5);
         let tx = Arc::new(Mutex::new(tx));
 
+        let update_list = update().await;
         let _handler = task::spawn(port_handler(rx));
-        let update_tx = Arc::clone(&tx);
-        update(update_tx).await;
+
+        if let Ok(servers) = update_list {
+            for server in servers {
+                tx.lock().await.send(server).await.unwrap();
+            }
+        }
         // tx.lock()
         //     .await
         //     .send("45.93.200.95:25565".parse().unwrap())
