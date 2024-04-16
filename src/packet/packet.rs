@@ -1,7 +1,9 @@
+use mc_varint::{VarInt, VarIntWrite};
+use std::io::{Cursor, Result};
 use tokio::{io::AsyncReadExt, net::TcpStream};
 use uuid::Uuid;
-use std::io::Result;
 
+use mc_varint::VarIntRead;
 #[derive(Debug, Clone, Copy)]
 pub struct MinecraftUUID(pub Uuid);
 
@@ -24,8 +26,10 @@ impl MinecraftPacket {
         let mut bytes = Vec::new();
 
         // Добавляем длину пакета как VarInt
-        let packet_length = VarInt(self.data.len() as i32 + 1); // +1 для packet_id
-        bytes.extend(packet_length.to_bytes());
+        let packet_length = VarInt::from(self.data.len() as i32 + 1); // +1 для packet_id
+        let mut cur = Cursor::new(Vec::with_capacity(5));
+        cur.write_var_int(packet_length);
+        bytes.extend(cur.into_inner());
 
         // Добавляем packet_id
         bytes.push(self.packet_id);
@@ -54,13 +58,16 @@ impl MinecraftPacketBuilder {
 
     // Добавление данных типа VarInt в пакет
     pub fn add_varint(&mut self, value: VarInt) -> &mut Self {
-        self.data.extend(value.to_bytes());
+        let mut cur = Cursor::new(Vec::with_capacity(5));
+        cur.write_var_int(value);
+
+        self.add_bytes(&cur.into_inner());
         self
     }
 
     // Добавление данных типа String в пакет
     pub fn add_string(&mut self, value: &str) -> &mut Self {
-        self.add_varint(VarInt(value.len() as i32))
+        self.add_varint(VarInt::from(value.len() as i32))
             .add_bytes(value.as_bytes());
         self
     }
@@ -85,60 +92,17 @@ impl MinecraftPacketBuilder {
     }
 }
 
-// Константы для VarInt
-const CONTINUE_BIT: u8 = 0b1000_0000;
-const SEGMENT_BITS: u32 = 0b0111_1111;
+pub async fn read_var_int(sock: &mut TcpStream) -> Result<VarInt> {
+    let mut buf = Vec::new();
 
-// Тип VarInt
-#[derive(Debug, Clone, Copy)]
-pub struct VarInt(pub i32);
+    loop {
+        let temp = sock.read_u8().await?;
+        buf.push(temp);
 
-impl VarInt {
-    pub async fn from_socket(stream: &mut TcpStream) -> Result<Self> {
-        let mut value = 0;
-        let mut position = 0;
-        let mut current_byte: u8;
-
-        loop {
-            current_byte = stream.read_u8().await?;
-            value |= ((current_byte & 0x7F) as i32) << position;
-
-            if (current_byte & 0x80) == 0 {
-                break;
-            }
-
-            position += 7;
-
-            if position >= 32 {
-                return Err(std::io::Error::new(
-                     std::io::ErrorKind::InvalidData,
-                                   "VarInt is too large",
-                     ));
-            }
+        if temp & 0b1000_0000 == 0 {
+            let mut cur = Cursor::new(buf);
+            let var_int = cur.read_var_int().unwrap();
+            return Ok(var_int);
         }
-
-        Ok(VarInt(value))
-    }
-    // Метод для кодирования VarInt в байты
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut value = self.0 as u32;
-        let mut bytes = Vec::new();
-
-        loop {
-            let mut byte = (value & SEGMENT_BITS) as u8;
-            value >>= 7;
-
-            if value != 0 {
-                byte |= CONTINUE_BIT;
-            }
-
-            bytes.push(byte);
-
-            if value == 0 {
-                break;
-            }
-        }
-
-        bytes
     }
 }

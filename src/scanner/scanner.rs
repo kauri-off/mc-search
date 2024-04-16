@@ -1,4 +1,5 @@
 use mc_query::status;
+use mc_varint::VarInt;
 use rusqlite::params;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
@@ -10,7 +11,7 @@ use tokio::{
 use tokio_rusqlite::Connection;
 use uuid::Uuid;
 
-use crate::packet::packet::{MinecraftPacketBuilder, MinecraftUUID, VarInt};
+use crate::packet::packet::{read_var_int, MinecraftPacketBuilder, MinecraftUUID};
 
 pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<Connection>>) {
     let data = timeout(
@@ -91,10 +92,10 @@ pub fn motd_fmt(motd: mc_query::status::ChatObject) -> String {
 async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<Option<LICENSE>> {
     let mut sock = TcpStream::connect(addr).await?;
     let handshake = MinecraftPacketBuilder::new(0)
-        .add_varint(VarInt(protocol as i32))
+        .add_varint(VarInt::from(protocol as i32))
         .add_string(&addr.ip().to_string())
         .add_bytes(&protocol.to_be_bytes())
-        .add_varint(VarInt(2))
+        .add_varint(VarInt::from(2))
         .build();
 
     // dbg!(handshake.to_bytes());
@@ -108,10 +109,12 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<Option<LIC
         .build();
 
     sock.write(&login.to_bytes()).await?;
-
-    let len = VarInt::from_socket(&mut sock).await;
+    let len = read_var_int(&mut sock).await;
     if let Err(_) = len {
-        return Err(std::io::Error::new(std::io::ErrorKind::Other, "connect error"));
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "connect error",
+        ));
     }
     let packet_id = sock.read_u8().await?;
 
@@ -122,16 +125,15 @@ async fn license(addr: &SocketAddr, protocol: u16) -> std::io::Result<Option<LIC
 enum LICENSE {
     DISCONNECT = 0x00,
     LICENSE = 0x01,
-    CRACKED = 0x02
+    CRACKED = 0x03,
 }
-
 
 impl LICENSE {
     fn from_u8(value: &u8) -> Option<LICENSE> {
         match value {
             0x00 => Some(LICENSE::DISCONNECT),
             0x01 => Some(LICENSE::LICENSE),
-            0x02 => Some(LICENSE::CRACKED),
+            0x03 => Some(LICENSE::CRACKED),
             _ => None,
         }
     }
