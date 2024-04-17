@@ -1,51 +1,11 @@
 version: '3.5'
 
 services:
-  rust1:
+  rust:
     build: .
-    container_name: mc-search-1
+    container_name: mc-search
     volumes:
-      - ./db1:/app/db
-    restart: always
-    deploy:
-      resources:
-        limits:
-          pids: 0
-  rust2:
-    build: .
-    container_name: mc-search-2
-    volumes:
-      - ./db2:/app/db
-    restart: always
-    deploy:
-      resources:
-        limits:
-          pids: 0
-  rust3:
-    build: .
-    container_name: mc-search-3
-    volumes:
-      - ./db3:/app/db
-    restart: always
-    deploy:
-      resources:
-        limits:
-          pids: 0
-  rust4:
-    build: .
-    container_name: mc-search-4
-    volumes:
-      - ./db4:/app/db
-    restart: always
-    deploy:
-      resources:
-        limits:
-          pids: 0
-  rust5:
-    build: .
-    container_name: mc-search-5
-    volumes:
-      - ./db5:/app/db
+      - ./db:/app/db
     restart: always
     deploy:
       resources:

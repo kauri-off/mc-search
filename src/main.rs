@@ -16,9 +16,9 @@ mod scanner;
 fn main() {
     println!("MC Search: Starting");
 
-    let threads = 32;
+    let threads = 150;
     let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(threads + 2)
+        .worker_threads(threads + 3)
         .enable_all()
         .build()
         .unwrap();
@@ -28,8 +28,13 @@ fn main() {
         let tx = Arc::new(Mutex::new(tx));
 
         let _handler = task::spawn(port_handler(rx));
-        let update_tx = Arc::clone(&tx);
-        update(update_tx).await;
+
+        if let Ok(servers) = update().await {
+            for server in servers {
+                tx.lock().await.send(server).await.unwrap();
+            }
+        }
+
         // tx.lock()
         //     .await
         //     .send("45.93.200.95:25565".parse().unwrap())

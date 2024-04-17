@@ -1,8 +1,9 @@
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{net::SocketAddr, path::Path};
 
-use tokio::sync::{mpsc::Sender, Mutex};
-
-pub async fn update(tx: Arc<Mutex<Sender<SocketAddr>>>) {
+pub async fn update() -> Result<Vec<SocketAddr>, tokio_rusqlite::Error> {
+    if !Path::new("./db/database.db").exists() {
+        return Ok(vec![]);
+    }
     println!("Updating...");
 
     let conn = tokio_rusqlite::Connection::open("./db/database.db")
@@ -26,10 +27,5 @@ pub async fn update(tx: Arc<Mutex<Sender<SocketAddr>>>) {
             Ok(result)
         })
         .await;
-    if let Ok(servers) = servers {
-        for server in servers {
-            tx.lock().await.send(server).await.unwrap();
-            tokio::time::sleep(Duration::from_millis(10)).await;
-        }
-    }
+    servers
 }
