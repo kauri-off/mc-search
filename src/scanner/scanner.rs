@@ -10,6 +10,9 @@ use super::server_data::ServerData;
 
 pub async fn scan_server(addr: SocketAddr, conn: Arc<Mutex<TConnection>>) {
     let server_data = ServerData::from(&addr).await;
+    if let Some(server_data) = server_data.clone() {
+        println!("{}", server_data);
+    }
 
     let conn = conn.lock().await;
     conn.call(move |conn| {

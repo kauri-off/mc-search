@@ -9,6 +9,7 @@ use crate::scanner::scanner::LICENSE;
 
 use super::scanner::license;
 
+#[derive(Clone)]
 pub struct ServerData {
     addr: SocketAddr,
     version: String,
