@@ -10,7 +10,7 @@ pub async fn update() -> Result<Vec<SocketAddr>, tokio_rusqlite::Error> {
         .await
         .unwrap();
 
-    let servers = conn
+    conn
         .call(|conn| {
             let mut result = Vec::new();
             let mut stmt = conn.prepare("SELECT ip, port FROM 'mc_server'")?;
@@ -26,7 +26,5 @@ pub async fn update() -> Result<Vec<SocketAddr>, tokio_rusqlite::Error> {
             conn.execute("DELETE FROM 'mc_server';", []).unwrap();
             Ok(result)
         })
-        .await;
-    servers
-    servers
+        .await
 }

@@ -27,7 +27,6 @@ fn main() {
         let (tx, rx) = mpsc::channel(5);
         let tx = Arc::new(Mutex::new(tx));
 
-        let update_list = update().await;
         let _handler = task::spawn(port_handler(rx));
 
         if let Ok(servers) = update().await {
