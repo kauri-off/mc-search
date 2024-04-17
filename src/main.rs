@@ -35,13 +35,6 @@ fn main() {
             }
         }
 
-        // tx.lock()
-        //     .await
-        //     .send("45.93.200.95:25565".parse().unwrap())
-        //     .await
-        //     .unwrap();
-        // _handler.await.unwrap();
-
         loop {
             let mut task_list = vec![];
             for _ in 0..threads {
@@ -55,4 +48,19 @@ fn main() {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::scanner::server_data::ServerData;
+
+    #[tokio::test]
+    async fn test_server() {
+        let server_data = ServerData::from(&"127.0.0.1:25565".parse().unwrap()).await;
+        if let Some(server_data) = server_data {
+            eprintln!("{}", server_data);
+        } else {
+            assert!(false, "Server not responsing");
+        }
+    }
 }

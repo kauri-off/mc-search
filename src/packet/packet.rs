@@ -16,39 +16,44 @@ impl MinecraftUUID {
 
 // Определение структуры для пакета протокола Minecraft
 pub struct MinecraftPacket {
-    packet_id: u8,
-    data: Vec<u8>,
+    pub packet_id: u8,
+    pub data: Vec<u8>,
 }
 
 impl MinecraftPacket {
-    // Метод для получения данных пакета
+    pub async fn from(sock: &mut TcpStream) -> Result<MinecraftPacket> {
+        let _len = read_var_int(sock).await;
+        let packet_id = sock.read_u8().await?;
+        let mut buf = Vec::new();
+        sock.read_exact(&mut buf).await?;
+
+        Ok(MinecraftPacket {
+            packet_id: packet_id,
+            data: buf,
+        })
+    }
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
-        // Добавляем длину пакета как VarInt
         let packet_length = VarInt::from(self.data.len() as i32 + 1); // +1 для packet_id
         let mut cur = Cursor::new(Vec::with_capacity(5));
         let _ = cur.write_var_int(packet_length);
         bytes.extend(cur.into_inner());
 
-        // Добавляем packet_id
         bytes.push(self.packet_id);
 
-        // Добавляем данные пакета
         bytes.extend(&self.data);
 
         bytes
     }
 }
 
-// Builder для построения пакета протокола Minecraft
 pub struct MinecraftPacketBuilder {
     packet_id: u8,
     data: Vec<u8>,
 }
 
 impl MinecraftPacketBuilder {
-    // Создание нового экземпляра Builder с заданным ID пакета
     pub fn new(packet_id: u8) -> Self {
         MinecraftPacketBuilder {
             packet_id,
