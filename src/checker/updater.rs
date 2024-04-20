@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, path::Path};
+use std::{fs, net::SocketAddr, path::Path};
 
 pub async fn update() -> Result<Vec<SocketAddr>, tokio_rusqlite::Error> {
     if !Path::new("./db/database.db").exists() {
@@ -10,7 +10,7 @@ pub async fn update() -> Result<Vec<SocketAddr>, tokio_rusqlite::Error> {
         .await
         .unwrap();
 
-    conn.call(|conn| {
+    let res = conn.call(|conn| {
         let mut result = Vec::new();
         let mut stmt = conn
             .prepare("SELECT ip, port FROM 'mc_server' UNION SELECT ip, port FROM 'open_port'")?;
@@ -23,9 +23,11 @@ pub async fn update() -> Result<Vec<SocketAddr>, tokio_rusqlite::Error> {
                 result.push(server);
             }
         }
-        conn.execute("DELETE FROM 'mc_server';", []).unwrap();
-        conn.execute("DELETE FROM 'open_port';", []).unwrap();
         Ok(result)
     })
-    .await
+    .await;
+    conn.close().await.unwrap();
+
+    fs::remove_file("./db/database.db").unwrap();
+    res
 }

@@ -27,9 +27,10 @@ fn main() {
         let (tx, rx) = mpsc::channel(5);
         let tx = Arc::new(Mutex::new(tx));
 
+        let servers = update().await;
         let _handler = task::spawn(port_handler(rx));
 
-        if let Ok(servers) = update().await {
+        if let Ok(servers) = servers {
             for server in servers {
                 tx.lock().await.send(server).await.unwrap();
             }
